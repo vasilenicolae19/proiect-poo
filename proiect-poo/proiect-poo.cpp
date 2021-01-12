@@ -120,11 +120,110 @@ void ManagerCinema::initializeaza()
         case 1:
             afiseazaOptiuniFilme();
             break;
+        case 2:
+            afiseazaOptiuniSali();
         default:
             cout << g_Prefix << "\nVa rugam selectati o optiune valida!\n" << endl;
             cin.ignore();
         }
     } while (optiune_selectata != 4);
+}
+
+void ManagerCinema::afiseazaOptiuniSali()
+{
+    system("CLS");
+    int optiune_selectata;
+
+    do {
+        afiseazaHeader("OPTIUNI SALI:");
+        cout << g_Prefix << "1. Afiseaza sali" << endl
+            << g_Prefix << "2. Adauga sala" << endl
+            << g_Prefix << "3. Editeaza sala" << endl
+            << g_Prefix << "4. Sterge sala" << endl
+            << g_Prefix << "5. Inapoi" << endl;
+
+        cout << endl << g_Prefix << "Va rugam selectati o optiune: ";
+        cin >> optiune_selectata;
+
+        switch (optiune_selectata)
+        {
+        case 1:
+            afiseazaSali();
+            break;
+
+        case 2:
+            adaugaSala();
+            break;
+        default:
+            cout << "Va rugam selectati o optiune valida!" << endl;
+            cin.ignore();
+        }
+
+    } while (optiune_selectata != 5);
+}
+
+void ManagerCinema::afiseazaSali()
+{
+    int optiune_selectata;
+
+    do {
+        system("CLS");
+        afiseazaHeader("SALI DISPONIBILE:");
+        
+        ifstream inFile;
+        inFile.open(g_BinarStocareSali, ios::binary);
+
+        Film* salaAux;
+        int idx = 0;
+
+        while (inFile.read((char*)&salaAux, sizeof(salaAux)))
+        {
+            cout << g_Prefix << idx + 1 << ". ";
+            salaAux->afiseaza();
+            idx++;
+        }
+
+        if (idx == 0)
+        {
+            cout << "\n" << g_Prefix << "Nicio sala disponibila!\n";
+        }
+
+        inFile.close();
+
+        cout << "\n" << g_Prefix << "0. Inapoi" << endl;
+
+        cout << endl << g_Prefix << "Va rugam selectati o optiune: ";
+        cin >> optiune_selectata;
+
+    } while (optiune_selectata != 0);
+
+    afiseazaOptiuniSali();
+}
+
+void ManagerCinema::adaugaSala()
+{
+    system("CLS");
+    afiseazaHeader("ADAUGA SALA  NOUA:");
+
+    string str_nume;
+    string str_locuri_disponibile;
+
+    int locuri_disponibile = 0;
+
+    cout << endl << g_Prefix << "Nume: ";
+    cin >> str_nume;
+
+    cout << endl << g_Prefix << "Locuri disponibile: ";
+    cin >> str_locuri_disponibile;
+
+    try {
+        locuri_disponibile = stoi(str_locuri_disponibile);
+    } catch (exception e){
+        // TODO: trateaza exceptie.
+    }
+
+    Sala* salaNoua = new Sala(const_cast<char*>(str_nume.c_str()), locuri_disponibile);
+    salaNoua->salveaza();
 }
 
 void ManagerCinema::afiseazaOptiuniFilme()
@@ -220,8 +319,30 @@ void Film::salveaza()
 {
     ofstream outFile;
     outFile.open(g_BinarStocareFilme, ios::out | ios::app);
+
     Film* filmAux = ManagerFilme::creeazaFilm(this->getNume(), this->getAnLansare(), this->getDurata());
+    
     outFile.write((char*)&filmAux, sizeof(this));
     outFile.close();
 }
 
+// Sala
+
+Sala::Sala() {}
+
+Sala::Sala(const char* nume, int locuri_disponibile)
+{
+    this->setNume(const_cast<char*>(nume));
+    this->setLocuriDisponibile(locuri_disponibile);
+}
+
+void Sala::salveaza()
+{
+    ofstream outFile;
+    outFile.open(g_BinarStocareSali, ios::out | ios::app);
+
+    Sala* salaAux = new Sala(this->getNume(), this->getLocuriDisponibile());
+    
+    outFile.write((char*)&salaAux, sizeof(this));
+    outFile.close();
+}

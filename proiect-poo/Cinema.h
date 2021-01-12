@@ -3,6 +3,7 @@
 using namespace std;
 
 const char* g_BinarStocareFilme = "filme.bin";
+const char* g_BinarStocareSali = "sali.bin";
 const char* g_Prefix = "\t\t\t\t";
 const int g_NumarFilmeDisponibile = 10;
 const char* g_NumeCinema = "ASE Multiplex";
@@ -21,11 +22,20 @@ public:
 	ManagerCinema();
 	~ManagerCinema();
 
-	void afiseazaOptiuniFilme();
+	static int _numarFilmeDisponibile;
+	
 	void initializeaza();
 	void afiseazaHeader(string titlu);
+
+	// Filme
+	void afiseazaOptiuniFilme();
 	void afiseazaFilme();
 	void adaugaFilm();
+
+	// Sali
+	void afiseazaOptiuniSali();
+	void afiseazaSali();
+	void adaugaSala();
 
 	void setNume(char* nume)
 	{
@@ -35,6 +45,43 @@ public:
 	string getNume()
 	{
 		return _nume;
+	}
+};
+
+class Sala : public Afisabil {
+private:
+	const char* _nume;
+	int _locuri_disponibile;
+
+public:
+	Sala();
+	Sala(const char* nume, int locuri_disponibile);
+
+	void salveaza();
+
+	void setNume(const char* nume)
+	{
+		// TODO: Validare.
+		_nume = nume;
+	}
+
+	const char* getNume()
+	{
+		return _nume;
+	}
+
+	void setLocuriDisponibile(int locuri_disponibile) {
+		// TODO: Validare (>= 0).
+		_locuri_disponibile = locuri_disponibile;
+	}
+
+	int getLocuriDisponibile() {
+		return _locuri_disponibile;
+	};
+
+	void afiseaza() override
+	{
+		cout << "Sala " << getNume() << " Locuri: " << getLocuriDisponibile() << endl;
 	}
 };
 
@@ -82,13 +129,6 @@ public:
 	static Film* cautaFilm(string nume);
 	static void afiseazaFilme(string prefix);
 	static void adaugaFilm();
-};
-
-class Sala {
-private:
-	char* nume_sala;
-	int nr_locuri_total;
-	int nr_locuri_rezervate;
 };
 
 class Bilet {
