@@ -8,6 +8,30 @@ const char* g_Prefix = "\t\t\t\t";
 const int g_NumarFilmeDisponibile = 10;
 const char* g_NumeCinema = "ASE Multiplex";
 
+class ManagerCinema;
+class Sala;
+class Rezervare;
+class Film;
+class Bilet;
+class Plata;
+
+ostream& operator<<(ostream& out, ManagerCinema* managerCinema);
+
+ostream& operator<<(ostream& out, Sala* sala);
+istream& operator>>(istream& in, Sala* sala);
+
+ostream& operator<<(ostream& out, Rezervare* rezervare);
+istream& operator>>(istream& in, Rezervare* rezervare);
+
+ostream& operator<<(ostream& out, Film* film);
+istream& operator>>(istream& in, Film* film);
+
+ostream& operator<<(ostream& out, Bilet* bilet);
+istream& operator>>(istream& in, Bilet* bilet);
+
+ostream& operator<<(ostream& out, Plata* plata);
+istream& operator>>(istream& in, Plata* plata);
+
 // interfata "afisabil"
 class Afisabil {
 	virtual void afiseaza() = 0;
@@ -19,8 +43,10 @@ private:
 	const char* _nume;
 
 public:
-	ManagerCinema();
+	ManagerCinema(const char* nume);
 	~ManagerCinema();
+	ManagerCinema(const ManagerCinema& managerCinema);
+	ManagerCinema& operator=(const ManagerCinema& managerCinema);
 
 	static int _numarFilmeDisponibile;
 	
@@ -50,19 +76,32 @@ public:
 
 class Sala : public Afisabil {
 private:
-	const char* _nume;
+	char* _nume;
 	int _locuri_disponibile;
 
 public:
 	Sala();
 	Sala(const char* nume, int locuri_disponibile);
+	Sala(const Sala& sala);
+	Sala& operator=(const Sala& sala);
+	~Sala();
+	Sala& operator!();
+	bool operator>(Sala& sala);
+	bool operator==(Sala& sala);
 
 	void salveaza();
 
 	void setNume(const char* nume)
 	{
-		// TODO: Validare.
-		_nume = nume;
+		if (nume != nullptr)
+		{
+			if (this->_nume != nullptr)
+				delete[]this->_nume;
+			this->_nume = new char[strlen(nume) + 1];
+			strcpy_s(this->_nume, strlen(nume) + 1, nume);
+		}
+		else
+			_nume = nullptr;
 	}
 
 	const char* getNume()
@@ -71,8 +110,8 @@ public:
 	}
 
 	void setLocuriDisponibile(int locuri_disponibile) {
-		// TODO: Validare (>= 0).
-		_locuri_disponibile = locuri_disponibile;
+		if(locuri_disponibile >= 0)
+			_locuri_disponibile = locuri_disponibile;
 	}
 
 	int getLocuriDisponibile() {
@@ -81,42 +120,89 @@ public:
 
 	void afiseaza() override
 	{
-		cout << "Sala " << getNume() << " Locuri: " << getLocuriDisponibile() << endl;
+		cout << this;
 	}
 };
 
 class Rezervare {
 private:
-	char* nume_rezervare;
+	std::string nume_rezervare;
+public:
+	std::string getNume() { return nume_rezervare; }
+
+	void setNume(std::string nume) { this->nume_rezervare = nume; }
 };
 
 class Film : public Afisabil {
 private:
-	const char* _nume;
+	char* _nume;
 	int _an_lansare;
 	int _durata;
+	int _numarReviewuri;
+	int* _noteReviewuri;
 
 public:
-	Film();
+	Film()
+	{
+		_nume = nullptr;
+		_noteReviewuri = nullptr;
+	}
+
 	Film(const char* nume, int an, int durata);
+	Film(const Film& film);
+	Film& operator=(const Film& film);
+	~Film();
 
 	// set
-	void setNume(const char* nume) { _nume = nume; }
-	void setAnLansare(int an) { _an_lansare = an;}
-	void setDurata(int durata) { _durata = durata; }
+	void setNume(const char* nume) 
+	{ 
+		if (nume != nullptr)
+		{
+			if (this->_nume != nullptr)
+				delete[] this->_nume;
+			this->_nume = new char[strlen(nume) + 1];
+			strcpy_s(this->_nume, strlen(nume) + 1, nume);
+		}
+		else
+		{
+			this->_nume = nullptr;
+		}
+	}
+	void setAnLansare(int an) { if(an >= 1900) _an_lansare = an;}
+	void setDurata(int durata) { if(durata > 0) _durata = durata; }
+	void setReviewuri(int numarReviewuri, int* reviweuri)
+	{
+		if (numarReviewuri > 0)
+		{
+			this->_numarReviewuri = numarReviewuri;
+			if (this->_noteReviewuri != nullptr)
+				delete[] this->_noteReviewuri;
+			this->_noteReviewuri = new int[this->_numarReviewuri];
+			for (int i = 0;i < numarReviewuri;i++)
+				this->_noteReviewuri[i] = reviweuri[i];
+		}
+		else
+		{
+			this->_numarReviewuri = 0;
+			this->_noteReviewuri = nullptr;
+		}
+	}
 
 	// get
 	const char* getNume() { return _nume; }
 	int getAnLansare() { return _an_lansare; }
 	int getDurata() { return _durata; }
+	int getNumarReviewuri() { return _numarReviewuri; }
 
 	void afiseaza() override
 	{
-		cout << _nume << " - An: " << _an_lansare << " Durata: " << _durata << " minute" << endl;
+		cout << this;
 	}
 
 	void salveaza();
 	void sterge();
+
+	int operator[](int index);
 };
 
 class ManagerFilme {
@@ -134,11 +220,35 @@ public:
 class Bilet {
 private:
 	int id;
-	char* nume_bilet;
+	std::string nume_bilet;
+public:
+	Bilet(int id, std::string nume);
+
+	void setId(int id) { this->id = id; }
+	void setNume(std::string nume) { this->nume_bilet = nume; }
+
+	int getId() { return this->id; }
+	std::string getNume() { return this->nume_bilet; }
 };
 
 class Plata {
 private:
-	char* moneda;
+	std::string moneda;
 	int suma;
+public:
+	Plata(std::string moneda, int suma);
+
+	void setMoneda(std::string moneda) { this->moneda = moneda; }
+	void setSuma(int suma) { this->suma = suma; }
+
+	std::string getMoneda() { return this->moneda; }
+	int getSuma() { return this->suma; }
+
+	int operator+(int sumaExtra);
+	Plata& operator++();
+	Plata& operator++(int);
+
+	operator int() const;
 };
+
+int operator+(int sumaExtra, Plata plata);
