@@ -2,6 +2,7 @@
 #include <list>;
 using namespace std;
 
+const char* g_TempFilePrefix = "temp";
 const char* g_BinarStocareFilme = "filme.bin";
 const char* g_BinarStocareSali = "sali.bin";
 const char* g_Prefix = "\t\t\t\t";
@@ -41,7 +42,6 @@ class Afisabil {
 class ManagerCinema {
 private:
 	const char* _nume;
-
 public:
 	ManagerCinema(const char* nume);
 	~ManagerCinema();
@@ -57,11 +57,19 @@ public:
 	void afiseazaOptiuniFilme();
 	void afiseazaFilme();
 	void adaugaFilm();
+	void editeazaFilm();
+	int totalFilmeDisponibile();
+	void stergeFilm();
 
 	// Sali
 	void afiseazaOptiuniSali();
 	void afiseazaSali();
 	void adaugaSala();
+	void editeazaSala();
+	void afiseazaListaSali();
+	Sala cautaSala(int id);
+	void stergeSala();
+	int totalSaliDisponibile();
 
 	void setNume(char* nume)
 	{
@@ -89,7 +97,7 @@ public:
 	bool operator>(Sala& sala);
 	bool operator==(Sala& sala);
 
-	void salveaza();
+	void salveaza(const char* fisier);
 
 	void setNume(const char* nume)
 	{
@@ -199,7 +207,7 @@ public:
 		cout << this;
 	}
 
-	void salveaza();
+	void salveaza(const char* fisier);
 	void sterge();
 
 	int operator[](int index);
