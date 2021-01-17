@@ -1,5 +1,7 @@
 #pragma once
 #include <list>;
+#include <vector>;
+#include <map>;
 using namespace std;
 
 const char* g_TempFilePrefix = "temp";
@@ -36,12 +38,14 @@ istream& operator>>(istream& in, Plata* plata);
 // interfata "afisabil"
 class Afisabil {
 	virtual void afiseaza() = 0;
+	virtual void afiseazaSumar() = 0;
 };
 
 // manager general pentru cinematograf
 class ManagerCinema {
 private:
 	const char* _nume;
+	std::map<std::string, Plata*> plati;
 public:
 	ManagerCinema(const char* nume);
 	~ManagerCinema();
@@ -130,6 +134,11 @@ public:
 	{
 		cout << this;
 	}
+
+	void afiseazaSumar() override
+	{
+		cout << this->_nume;
+	}
 };
 
 class Rezervare {
@@ -146,14 +155,14 @@ private:
 	char* _nume;
 	int _an_lansare;
 	int _durata;
-	int _numarReviewuri;
-	int* _noteReviewuri;
+	std::vector<int> _noteReviewuri;
 
 public:
 	Film()
 	{
 		_nume = nullptr;
-		_noteReviewuri = nullptr;
+		_an_lansare = 0;
+		_durata = 0;
 	}
 
 	Film(const char* nume, int an, int durata);
@@ -178,33 +187,27 @@ public:
 	}
 	void setAnLansare(int an) { if(an >= 1900) _an_lansare = an;}
 	void setDurata(int durata) { if(durata > 0) _durata = durata; }
-	void setReviewuri(int numarReviewuri, int* reviweuri)
+	void setReviewuri(std::vector<int> reviews)
 	{
-		if (numarReviewuri > 0)
-		{
-			this->_numarReviewuri = numarReviewuri;
-			if (this->_noteReviewuri != nullptr)
-				delete[] this->_noteReviewuri;
-			this->_noteReviewuri = new int[this->_numarReviewuri];
-			for (int i = 0;i < numarReviewuri;i++)
-				this->_noteReviewuri[i] = reviweuri[i];
-		}
-		else
-		{
-			this->_numarReviewuri = 0;
-			this->_noteReviewuri = nullptr;
-		}
+		this->_noteReviewuri.clear();
+		for (auto review : reviews)
+			this->_noteReviewuri.push_back(review);
 	}
 
 	// get
 	const char* getNume() { return _nume; }
 	int getAnLansare() { return _an_lansare; }
 	int getDurata() { return _durata; }
-	int getNumarReviewuri() { return _numarReviewuri; }
+	int getNumarReviewuri() { return _noteReviewuri.size(); }
 
 	void afiseaza() override
 	{
 		cout << this;
+	}
+
+	void afiseazaSumar() override
+	{
+		cout << this->_nume;
 	}
 
 	void salveaza(const char* fisier);
@@ -240,7 +243,7 @@ public:
 };
 
 class Plata {
-private:
+protected:
 	std::string moneda;
 	int suma;
 public:
@@ -257,6 +260,27 @@ public:
 	Plata& operator++(int);
 
 	operator int() const;
+
+	virtual void efectuarePlata(int suma);
+
+	virtual int restPlata();
 };
 
 int operator+(int sumaExtra, Plata plata);
+
+class PlataOnline : public Plata
+{
+public:
+	PlataOnline(std::string moneda, int suma) : Plata(moneda, suma) {};
+
+	void efectuarePlata(int suma) override;
+
+	int restPlata() override;
+};
+
+template<typename T>
+void afisareDetaliata(T* deAfisat)
+{
+	cout << "descriere detaliata " << endl << g_Prefix << deAfisat
+		<< g_Prefix << "----------------" << endl;
+}

@@ -33,13 +33,13 @@ void ManagerFilme::afiseazaFilme(string prefix = "")
 
     int idx = 0;
 	int temp, temp1;
-	int tempArray[100];
 	char buffer[255];
 
 	inFile.read((char*)&temp, sizeof(temp));
 
     while (!inFile.eof())
     {
+		std::vector<int> reviews;
 		inFile.read(buffer, temp);
 		filmAux.setNume(buffer);
 
@@ -54,10 +54,10 @@ void ManagerFilme::afiseazaFilme(string prefix = "")
 		for (int i = 0;i < temp;i++)
 		{
 			inFile.read((char*)&temp1, sizeof(temp1));
-			tempArray[i] = temp1;
+			reviews.push_back(temp1);
 		}
 
-		filmAux.setReviewuri(temp, tempArray);
+		filmAux.setReviewuri(reviews);
         cout << prefix << idx + 1 << ". ";
         filmAux.afiseaza();
 
@@ -101,7 +101,7 @@ void ManagerFilme::adaugaFilm()
 	string nr_reviews;
 	string review;
 
-	int reviews[100];
+	std::vector<int> reviews;
     int an = 0;
     int durata = 0;
 	int nrReviews = 0;
@@ -133,17 +133,17 @@ void ManagerFilme::adaugaFilm()
 		{
 			cout << endl << g_Prefix << "Nota: ";
 			cin >> review;
-			try { reviews[i] = stoi(review); }
+			try { reviews.push_back(stoi(review)); }
 			catch (exception e) {}
 		}
 	}
 
     Film* filmNou = new Film(str_nume.c_str(), an, durata);
-	filmNou->setReviewuri(nrReviews, reviews);
+	filmNou->setReviewuri(reviews);
 
 	cout << g_Prefix << "Film adaugat: ";
 
-    filmNou->afiseaza();
+	afisareDetaliata<Film>(filmNou);
     filmNou->salveaza(g_BinarStocareFilme);
 
     system("CLS");
@@ -678,13 +678,13 @@ void ManagerCinema::editeazaFilm()
 
     int idx = 0;
     int temp, temp1;
-    int tempArray[100];
     char buffer[255];
 
     inFile.read((char*)&temp, sizeof(temp));
 
     while (!inFile.eof())
     {
+		std::vector<int> vector;
         inFile.read(buffer, temp);
         filmAux.setNume(buffer);
 
@@ -699,10 +699,10 @@ void ManagerCinema::editeazaFilm()
         for (int i = 0; i < temp; i++)
         {
             inFile.read((char*)&temp1, sizeof(temp1));
-            tempArray[i] = temp1;
+			vector.push_back(temp1);
         }
 
-        filmAux.setReviewuri(temp, tempArray);
+        filmAux.setReviewuri(vector);
 
         idx++;
 
@@ -770,13 +770,13 @@ void ManagerCinema::stergeFilm()
 
     int idx = 0;
     int temp, temp1;
-    int tempArray[100];
     char buffer[255];
 
     inFile.read((char*)&temp, sizeof(temp));
 
     while (!inFile.eof())
     {
+		std::vector<int> vector;
         inFile.read(buffer, temp);
         filmAux.setNume(buffer);
 
@@ -791,10 +791,10 @@ void ManagerCinema::stergeFilm()
         for (int i = 0; i < temp; i++)
         {
             inFile.read((char*)&temp1, sizeof(temp1));
-            tempArray[i] = temp1;
+			vector.push_back(temp1);
         }
 
-        filmAux.setReviewuri(temp, tempArray);
+        filmAux.setReviewuri(vector);
 
         idx++;
 
@@ -855,6 +855,9 @@ ManagerCinema::ManagerCinema(const char* nume)
     } else {
         _nume = nullptr;
     }
+
+	this->plati["fizice"] = new Plata("ron", 100);
+	this->plati["online"] = new PlataOnline("ron", 100);
 }
 
 ManagerCinema::~ManagerCinema()
@@ -888,9 +891,6 @@ Film::Film(const char* nume, int an, int durata)
     this->setNume(nume);
     this->setAnLansare(an);
     this->setDurata(durata);
-
-	_numarReviewuri = 0;
-	_noteReviewuri = nullptr;
 }
 
 Film::Film(const Film& film)
@@ -898,7 +898,7 @@ Film::Film(const Film& film)
 	this->setNume(film._nume);
 	this->setAnLansare(film._an_lansare);
 	this->setDurata(film._durata);
-	this->setReviewuri(film._numarReviewuri, film._noteReviewuri);
+	this->setReviewuri(film._noteReviewuri);
 }
 
 Film& Film::operator=(const Film& film)
@@ -906,17 +906,13 @@ Film& Film::operator=(const Film& film)
 	this->setNume(film._nume);
 	this->setAnLansare(film._an_lansare);
 	this->setDurata(film._durata);
-	this->setReviewuri(film._numarReviewuri, film._noteReviewuri);
+	this->setReviewuri(film._noteReviewuri);
 
 	return *this;
 }
 
 Film::~Film()
 {
-    if (this->_noteReviewuri != nullptr) {
-        delete[] this->_noteReviewuri;
-    }
-
     if (this->_nume != nullptr) {
         delete[] this->_nume;
     }
@@ -969,27 +965,28 @@ istream& operator>>(istream& in, Film* film)
 	char buffer[255];
 	in >> buffer;
 	film->setNume(buffer);
-	int temp;
+	int temp, temp1;
 	in >> temp;
 	film->setAnLansare(temp);
 	in >> temp;
 	film->setDurata(temp);
 	in >> temp;
-	int tempArray[100];
+	std::vector<int> vector;
 
 	for (int i = 0;i < temp;i++)
 	{
-		in >> tempArray[i];
+		in >> temp1;
+		vector.push_back(temp1);
 	}
 
-	film->setReviewuri(temp, tempArray);
+	film->setReviewuri(vector);
 
 	return in;
 }
 
 int Film::operator[](int index)
 {
-	if (index >= 0 && index < this->_numarReviewuri)
+	if (index >= 0 && index < this->_noteReviewuri.size())
 	{
 		return this->_noteReviewuri[index];
 	}
@@ -1178,6 +1175,30 @@ istream& operator>>(istream& in, Plata* plata)
 
 	return in;
 }
+
+void Plata::efectuarePlata(int suma)
+{
+	this->suma -= suma;
+}
+
+int Plata::restPlata()
+{
+	return this->suma;
+}
+
+// PlataOnline
+
+void PlataOnline::efectuarePlata(int suma)
+{
+	//apelare endpoint plata online...
+	this->suma -= suma;
+}
+
+int PlataOnline::restPlata()
+{
+	return 0.9 * this->suma;
+}
+
 
 // Rezervare
 
